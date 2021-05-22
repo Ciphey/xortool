@@ -122,6 +122,7 @@ def main():
     sys.exit(1)
 
 def xortool_api(ciphertext, config):
+    out = {}
     PARAMETERS.update(parse_parameters(__doc__, __version__))
     PARAMETERS["known_key_length"] = guess_key_length(ciphertext)
 
@@ -131,7 +132,7 @@ def xortool_api(ciphertext, config):
          key_char_used) = guess_probable_keys_for_chars(ciphertext, try_chars)
     
     out["Printable"] = api_print_keys(probable_keys)
-    out["Plaintext"] = produce_plaintexts(ciphertext, probable_keys, key_char_used)
+    out["Plaintext"] = api_produce_plaintexts(ciphertext, probable_keys, key_char_used)
     
     return out
     
@@ -365,6 +366,47 @@ def percentage_valid(text):
 # -----------------------------------------------------------------------------
 # PRODUCE OUTPUT
 # -----------------------------------------------------------------------------
+
+def api_produce_plaintexts(ciphertext, keys, key_char_used):
+    """
+    Produce plaintext variant for each possible key,
+    returns dicts with keys, percentage of valid
+    characters and used most frequent character
+    """
+
+    # this is split up in two files since the
+    # key can contain all kinds of characters
+
+    key_mapping = {}
+    perc_mapping = {}
+    plaintext = []
+
+    # Change this for the % threshold.
+    threshold_valid = 75
+    count_valid = 0
+
+    for index, key in enumerate(keys):
+        key_index = str(index).rjust(len(str(len(keys) - 1)), "0")
+        key_repr = repr(key)
+
+        key_mapping[key_index] = {}
+        # file_name = os.path.join(DIRNAME, key_index + ".out")
+
+        dexored = dexor(ciphertext, key)
+        # ignore saving file when known plain is provided and output doesn't contain it
+        if PARAMETERS["known_plain"] and PARAMETERS["known_plain"] not in dexored:
+            continue
+        perc = round(100 * percentage_valid(dexored))
+        if perc > threshold_valid:
+            count_valid += 1
+        key_mapping[key_index] = key_repr
+        perc_mapping[file_name] = [repr(key_char_used[key]), perc]
+
+    # fmt = "Found {C_COUNT}{:d}{C_RESET} plaintexts with {C_COUNT}{:d}{C_RESET}%+ valid characters"
+    if PARAMETERS["known_plain"]:
+        plaintext.append(PARAMETERS["known_plain"].decode('ascii'))
+    
+    return (plaintext, key_mapping, perc_mapping)
 
 def produce_plaintexts(ciphertext, keys, key_char_used):
     """
