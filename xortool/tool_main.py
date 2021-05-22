@@ -121,7 +121,24 @@ def main():
     cleanup()
     sys.exit(1)
 
+def xortool_api(ciphertext, config):
+    ciphertext = str.encode(ciphertext)
+    try_chars = str.encode(" ")
+    out = {}
+    PARAMETERS.update(parse_parameters(__doc__, __version__))
+    PARAMETERS["known_key_length"] = guess_key_length(ciphertext)
 
+    
+    print("guessing probable keys")
+    (probable_keys,
+         key_char_used) = guess_probable_keys_for_chars(ciphertext, try_chars)
+    print("ok no keys")
+    out["Printable"] = api_print_keys(probable_keys)
+    out["Plaintext"] = api_produce_plaintexts(ciphertext, probable_keys, key_char_used)
+    
+    print(out)
+    return out
+    
 # -----------------------------------------------------------------------------
 # LOADING CIPHERTEXT
 # -----------------------------------------------------------------------------
@@ -145,11 +162,14 @@ def guess_key_length(text):
     Set key_length to the most possible if it's not set by user.
     """
     fitnesses = calculate_fitnesses(text)
+    print("i am fit as fuck boyyy")
     if not fitnesses:
         raise AnalysisError("No candidates for key length found! Too small file?")
 
     print_fitnesses(fitnesses)
+    print("right above divisiors boiii") 
     guess_and_print_divisors(fitnesses)
+    print("i am returning boyyy")
     return get_max_fitnessed_key_length(fitnesses)
 
 
@@ -275,7 +295,9 @@ def guess_probable_keys_for_chars(text, try_chars):
     key_char_used = {}
 
     for c in try_chars:
+        print("in for loop")
         keys = guess_keys(text, c)
+        print("i can guess a key")
         for key in keys:
             key_char_used[key] = c
             if key not in probable_keys:
@@ -291,14 +313,18 @@ def guess_keys(text, most_char):
     """
     key_length = PARAMETERS["known_key_length"]
     key_possible_bytes = [[] for _ in range(key_length)]
+    print("in guess keys")
 
     for offset in range(key_length):  # each byte of key<
+        print("i noffset for loop")
         chars_count = chars_count_at_offset(text, key_length, offset)
+        print("chars count")
         max_count = max(chars_count.values())
         for char in chars_count:
+            print("for char")
             if chars_count[char] >= max_count:
                 key_possible_bytes[offset].append(char ^ most_char)
-
+    print("exitin")
     return all_keys(key_possible_bytes)
 
 
@@ -312,6 +338,16 @@ def all_keys(key_possible_bytes, key_part=(), offset=0):
     for c in key_possible_bytes[offset]:
         keys += all_keys(key_possible_bytes, key_part + (c,), offset + 1)
     return keys
+
+def api_print_keys(keys):
+    fmt = "{C_COUNT}{:d}{C_RESET} possible key(s) of length {C_COUNT}{:d}{C_RESET}:"
+    to_print = ""
+    to_print += fmt.format(len(keys), len(keys[0]), **COLORS)
+    for key in keys[:5]:
+        to_print += (C_KEY + repr(key)[2:-1] + C_RESET)
+    if len(keys) > 10:
+        to_print += ("...")
+    return to_print
 
 
 def print_keys(keys):
@@ -342,6 +378,48 @@ def percentage_valid(text):
 # -----------------------------------------------------------------------------
 # PRODUCE OUTPUT
 # -----------------------------------------------------------------------------
+
+def api_produce_plaintexts(ciphertext, keys, key_char_used):
+    """
+    Produce plaintext variant for each possible key,
+    returns dicts with keys, percentage of valid
+    characters and used most frequent character
+    """
+
+    # this is split up in two files since the
+    # key can contain all kinds of characters
+
+    key_mapping = {}
+    perc_mapping = {}
+    plaintext = []
+
+    # Change this for the % threshold.
+    threshold_valid = 95
+    count_valid = 0
+
+    for index, key in enumerate(keys):
+        key_index = str(index).rjust(len(str(len(keys) - 1)), "0")
+        key_repr = repr(key)
+
+        key_mapping[key_index] = {}
+        # file_name = os.path.join(DIRNAME, key_index + ".out")
+
+        dexored = dexor(ciphertext, key)
+        # ignore saving file when known plain is provided and output doesn't contain it
+        if PARAMETERS["known_plain"] and PARAMETERS["known_plain"] not in dexored:
+            continue
+        perc = round(100 * percentage_valid(dexored))
+        if perc > threshold_valid:
+            count_valid += 1
+        key_mapping[key_index] = key_repr
+        perc_mapping[key_index] = [repr(key_char_used[key]), perc]
+
+    # fmt = "Found {C_COUNT}{:d}{C_RESET} plaintexts with {C_COUNT}{:d}{C_RESET}%+ valid characters"
+    if PARAMETERS["known_plain"]:
+        print(PARAMETERS["known_plain"].decode('ascii'))
+        plaintext.append("Plaintext is: ", PARAMETERS["known_plain"].decode('ascii'))
+    
+    return (plaintext, key_mapping, perc_mapping)
 
 def produce_plaintexts(ciphertext, keys, key_char_used):
     """
