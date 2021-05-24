@@ -431,7 +431,7 @@ def produce_plaintexts(ciphertext, keys, key_char_used):
         perc_mapping[key_index] = [key_char_used[key], perc]
         if not PARAMETERS["filter_output"] or \
             (PARAMETERS["filter_output"] and perc > threshold_valid):
-            result["Dexored"] = dexored
+            result["Dexored"] = dexored.decode("utf-8")
 
     if PARAMETERS["known_plain"]:
         # Is this a crib, known plaintext given?
