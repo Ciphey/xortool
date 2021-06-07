@@ -1,4 +1,4 @@
-from xortool.libcolors import color
+from xortool_ciphey.libcolors import color
 
 C_RESET = color()
 C_FATAL = color("red")

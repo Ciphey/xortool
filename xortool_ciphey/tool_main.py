@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from xortool import __version__
+from xortool_ciphey import __version__
 __doc__ = f"""
 xortool {__version__}
   A tool to do some xor analysis:
@@ -47,12 +47,12 @@ import os
 import string
 import sys
 
-from xortool.args import (
+from xortool_ciphey.args import (
     parse_parameters,
     ArgError,
 )
-from xortool.charset import CharsetError
-from xortool.colors import (
+from xortool_ciphey.charset import CharsetError
+from xortool_ciphey.colors import (
     COLORS,
     C_BEST_KEYLEN,
     C_BEST_PROB,
@@ -61,7 +61,7 @@ from xortool.colors import (
     C_RESET,
     C_WARN,
 )
-from xortool.routine import (
+from xortool_ciphey.routine import (
     decode_from_hex,
     dexor,
     die,

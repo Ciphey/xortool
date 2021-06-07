@@ -1,6 +1,6 @@
 from docopt import docopt
 
-from xortool.charset import get_charset
+from xortool_ciphey.charset import get_charset
 
 
 class ArgError(Exception):

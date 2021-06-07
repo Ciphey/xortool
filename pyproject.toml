@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "xortool_ciphey"
-version = "0.1.1"
+version = "0.1.2"
 description = "Multi-byte xor analysis for Ciphey"
 authors = ["bee-san <github@skerritt.blog>"]
 license = "MIT"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from xortool import __version__
+from xortool_ciphey import __version__
 __doc__ = f"""
 xortool-xor {__version__}
 xor strings
