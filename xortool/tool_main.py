@@ -95,15 +95,19 @@ def parse_char(ch):
         raise ValueError("Char can be only a char letter or hex")
     return int(ch, 16)
 
-def api(text = 'Uihr!hr!`!udru!gns!YNS-!hu!hr!sd`mmx!mnof!un!l`jd!rtsd!ui`u!YNSunnm!b`o!fdu!hu/!Bhqidx!*!YNSunnm!hr!bnnm/', config = {"most_frequent_char": " "}):
+def api(text = None, config = {"most_frequent_char": " ", "known_key_length": None}):
+    if text == None:
+        return "Error. No text given."
 
     PARAMETERS.update(parse_parameters(__doc__, __version__))
 
     ciphertext = str.encode(text)
-    print(PARAMETERS["most_frequent_char"])
+
     PARAMETERS["most_frequent_char"] = parse_char(config["most_frequent_char"])
     try_chars = [PARAMETERS["most_frequent_char"]]
-    print("i get to here")
+
+    PARAMETERS["known_key_length"] = config["known_key_length"]
+
     if not PARAMETERS["known_key_length"]:
         PARAMETERS["known_key_length"] = guess_key_length(ciphertext)
     
@@ -111,12 +115,10 @@ def api(text = 'Uihr!hr!`!udru!gns!YNS-!hu!hr!sd`mmx!mnof!un!l`jd!rtsd!ui`u!YNSu
          key_char_used) = guess_probable_keys_for_chars(ciphertext, try_chars)
 
     keys = print_keys(probable_keys)
-    print("\n")
-    print(keys)
-    print("\n")
+
     plaintext = produce_plaintexts(ciphertext, probable_keys, key_char_used)
-    import pprint 
-    pprint.pprint(plaintext)
+    
+    return (keys, plaintext)
 
 def main():
     try:
@@ -216,7 +218,7 @@ def calculate_fitnesses(text):
 
 
 def print_fitnesses(fitnesses):
-    print("The most probable key lengths:")
+    return 
 
     # top sorted by fitness, but print sorted by length
     fitnesses.sort(key=itemgetter(1), reverse=True)
@@ -237,7 +239,6 @@ def print_fitnesses(fitnesses):
     for key_length, fitness in top10:
         colors = best_colors if fitness == best_fitness else COLORS
         pct = round(100 * fitness * 1.0 / fitness_sum, 1)
-        print(fmt.format(key_length, pct, **colors))
 
 
 def calculate_fitness_sum(fitnesses):
@@ -272,7 +273,6 @@ def guess_and_print_divisors(fitnesses):
     fmt = "Key-length can be {C_DIV}{:d}*n{C_RESET}"
     for number, divisors_count in enumerate(divisors_counts):
         if divisors_count == max_divisors:
-            print(fmt.format(number, **COLORS))
             ret = number
             limit -= 1
             if limit == 0:
@@ -360,15 +360,9 @@ def print_keys(keys):
     possible_keys = {"keys": []}
 
     fmt = "{C_COUNT}{:d}{C_RESET} possible key(s) of length {C_COUNT}{:d}{C_RESET}:"
-    print(fmt.format(len(keys), len(keys[0]), **COLORS))
     for key in keys[:5]:
         possible_keys["keys"].append(repr(key)[2:-1])
     return possible_keys
-
-    # TODO do we want to include >10 keys? Will this slow the program down?
-    if len(keys) > 10:
-        print("...")
-
 
 # -----------------------------------------------------------------------------
 # RETURNS PERCENTAGE OF VALID TEXT CHARS
