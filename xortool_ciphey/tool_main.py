@@ -78,7 +78,47 @@ PARAMETERS = dict()
 
 class AnalysisError(Exception):
     pass
+def parse_char(ch):
+    """
+    'A' or '\x41' or '0x41' or '41'
+    '\x00' or '0x00' or '00'
+    """
+    if ch is None:
+        return None
+    if len(ch) == 1:
+        return ord(ch)
+    if ch[0:2] in ("0x", "\\x"):
+        ch = ch[2:]
+    if not ch:
+        raise ValueError("Empty char")
+    if len(ch) > 2:
+        raise ValueError("Char can be only a char letter or hex")
+    return int(ch, 16)
 
+def api(text = None, config = {"most_frequent_char": " ", "known_key_length": None}):
+    if text == None:
+        return "Error. No text given."
+
+    PARAMETERS.update(parse_parameters(__doc__, __version__))
+
+    ciphertext = str.encode(text)
+
+    PARAMETERS["most_frequent_char"] = parse_char(config["most_frequent_char"])
+    try_chars = [PARAMETERS["most_frequent_char"]]
+
+    PARAMETERS["known_key_length"] = config["known_key_length"]
+
+    if not PARAMETERS["known_key_length"]:
+        PARAMETERS["known_key_length"] = guess_key_length(ciphertext)
+    
+    (probable_keys,
+         key_char_used) = guess_probable_keys_for_chars(ciphertext, try_chars)
+
+    keys = print_keys(probable_keys)
+
+    plaintext = produce_plaintexts(ciphertext, probable_keys, key_char_used)
+    
+    return (keys, plaintext)
 
 def main():
     try:
@@ -178,7 +218,7 @@ def calculate_fitnesses(text):
 
 
 def print_fitnesses(fitnesses):
-    print("The most probable key lengths:")
+    return 
 
     # top sorted by fitness, but print sorted by length
     fitnesses.sort(key=itemgetter(1), reverse=True)
@@ -199,7 +239,6 @@ def print_fitnesses(fitnesses):
     for key_length, fitness in top10:
         colors = best_colors if fitness == best_fitness else COLORS
         pct = round(100 * fitness * 1.0 / fitness_sum, 1)
-        print(fmt.format(key_length, pct, **colors))
 
 
 def calculate_fitness_sum(fitnesses):
@@ -234,7 +273,6 @@ def guess_and_print_divisors(fitnesses):
     fmt = "Key-length can be {C_DIV}{:d}*n{C_RESET}"
     for number, divisors_count in enumerate(divisors_counts):
         if divisors_count == max_divisors:
-            print(fmt.format(number, **COLORS))
             ret = number
             limit -= 1
             if limit == 0:
@@ -315,17 +353,16 @@ def all_keys(key_possible_bytes, key_part=(), offset=0):
 
 
 def print_keys(keys):
+
     if not keys:
-        print("No keys guessed!")
-        return
+        return {"Keys": "No keys guessed!"}
+
+    possible_keys = {"keys": []}
 
     fmt = "{C_COUNT}{:d}{C_RESET} possible key(s) of length {C_COUNT}{:d}{C_RESET}:"
-    print(fmt.format(len(keys), len(keys[0]), **COLORS))
     for key in keys[:5]:
-        print(C_KEY + repr(key)[2:-1] + C_RESET)
-    if len(keys) > 10:
-        print("...")
-
+        possible_keys["keys"].append(repr(key)[2:-1])
+    return possible_keys
 
 # -----------------------------------------------------------------------------
 # RETURNS PERCENTAGE OF VALID TEXT CHARS
@@ -349,20 +386,22 @@ def produce_plaintexts(ciphertext, keys, key_char_used):
     creates csv files with keys, percentage of valid
     characters and used most frequent character
     """
-    cleanup()
-    mkdir(DIRNAME)
 
     # this is split up in two files since the
     # key can contain all kinds of characters
 
-    fn_key_mapping = "filename-key.csv"
-    fn_perc_mapping = "filename-char_used-perc_valid.csv"
+    result = {}
 
-    key_mapping = open(os.path.join(DIRNAME,  fn_key_mapping), "w")
-    perc_mapping = open(os.path.join(DIRNAME, fn_perc_mapping), "w")
+    # key repr
+    result["fn_key_mapping"] = {}
+    fn_key_mapping = result["fn_key_mapping"]
 
-    key_mapping.write("file_name;key_repr\n")
-    perc_mapping.write("file_name;char_used;perc_valid\n")
+    # char used, percent valid
+    result["filename-char_used-perc_valid"] = {}
+    fn_perc_mapping = result["filename-char_used-perc_valid"]
+
+    key_mapping = fn_key_mapping
+    perc_mapping = fn_perc_mapping
 
     threshold_valid = 95
     count_valid = 0
@@ -370,7 +409,7 @@ def produce_plaintexts(ciphertext, keys, key_char_used):
     for index, key in enumerate(keys):
         key_index = str(index).rjust(len(str(len(keys) - 1)), "0")
         key_repr = repr(key)
-        file_name = os.path.join(DIRNAME, key_index + ".out")
+        # file_name = os.path.join(DIRNAME, key_index + ".out")
 
         dexored = dexor(ciphertext, key)
         # ignore saving file when known plain is provided and output doesn't contain it
@@ -379,23 +418,22 @@ def produce_plaintexts(ciphertext, keys, key_char_used):
         perc = round(100 * percentage_valid(dexored))
         if perc > threshold_valid:
             count_valid += 1
-        key_mapping.write("{};{}\n".format(file_name, key_repr))
-        perc_mapping.write("{};{};{}\n".format(file_name,
-                                               repr(key_char_used[key]),
-                                               perc))
+        
+        key_mapping[key_index] = key_repr
+
+        # [key_char_used, percentage]
+        perc_mapping[key_index] = [key_char_used[key], perc]
         if not PARAMETERS["filter_output"] or \
             (PARAMETERS["filter_output"] and perc > threshold_valid):
-            f = open(file_name, "wb")
-            f.write(dexored)
-            f.close()
-    key_mapping.close()
-    perc_mapping.close()
+            result["Dexored"] = dexored.decode("utf-8")
 
-    fmt = "Found {C_COUNT}{:d}{C_RESET} plaintexts with {C_COUNT}{:d}{C_RESET}%+ valid characters"
     if PARAMETERS["known_plain"]:
-        fmt += " which contained '{}'".format(PARAMETERS["known_plain"].decode('ascii'))
-    print(fmt.format(count_valid, round(threshold_valid), **COLORS))
-    print("See files {}, {}".format(fn_key_mapping, fn_perc_mapping))
+        # Is this a crib, known plaintext given?
+        result["known_plain"] = PARAMETERS["known_plain"].decode('ascii')
+    
+    result["fn_key_mapping"] = fn_key_mapping
+    result["perc_mapping"] = fn_perc_mapping
+    return result
 
 
 def cleanup():
