@@ -101,7 +101,7 @@ def api(text = None, config = {"most_frequent_char": " ", "known_key_length": No
 
     PARAMETERS.update(parse_parameters(__doc__, __version__))
 
-    ciphertext = str.encode(text)
+    ciphertext = text
 
     PARAMETERS["most_frequent_char"] = parse_char(config["most_frequent_char"])
     try_chars = [PARAMETERS["most_frequent_char"]]
