@@ -21,6 +21,7 @@ PREDEFINED_CHARSETS = {
 
 
 def get_charset(charset):
+    return PREDEFINED_CHARSETS["printable"].encode("ascii")
     charset = charset or "printable"
     if charset in PREDEFINED_CHARSETS:
         return PREDEFINED_CHARSETS[charset].encode("ascii")
@@ -30,4 +31,5 @@ def get_charset(charset):
             _ += CHARSETS[c].encode("ascii")
         return _
     except KeyError:
-        raise CharsetError("Bad character set: ", charset)
+        # if it doesn't work, return default printable char set
+        return PREDEFINED_CHARSETS[charset].encode("ascii")

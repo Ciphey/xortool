@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from xortool_ciphey import __version__
+
 __doc__ = f"""
-xortool {__version__}
+xortool
   A tool to do some xor analysis:
   - guess the key length (based on count of equal chars)
   - guess the key (base on knowledge of most frequent char)
@@ -99,7 +99,7 @@ def api(text = None, config = {"most_frequent_char": " ", "known_key_length": No
     if text == None:
         return "Error. No text given."
 
-    PARAMETERS.update(parse_parameters(__doc__, __version__))
+    PARAMETERS.update(parse_parameters(__doc__))
 
     ciphertext = text
 
@@ -439,7 +439,3 @@ def produce_plaintexts(ciphertext, keys, key_char_used):
 def cleanup():
     if os.path.exists(DIRNAME):
         rmdir(DIRNAME)
-
-
-if __name__ == "__main__":
-    main()

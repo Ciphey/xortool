@@ -31,8 +31,8 @@ def parse_int(i):
     return int(i)
 
 
-def parse_parameters(doc, version):
-    p = docopt(doc, version=version)
+def parse_parameters(doc):
+    p = docopt(doc)
     p = {k.lstrip("-"): v for k, v in p.items()}
     try:
         return {
