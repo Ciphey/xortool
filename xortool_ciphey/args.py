@@ -1,4 +1,4 @@
-from docopt import docopt
+
 
 from xortool_ciphey.charset import get_charset
 
@@ -31,22 +31,22 @@ def parse_int(i):
     return int(i)
 
 
-def parse_parameters(doc):
-    p = docopt(doc)
-    p = {k.lstrip("-"): v for k, v in p.items()}
+def parse_parameters(a):
     try:
-        return {
-            "brute_chars": bool(p["brute-chars"]),
-            "brute_printable": bool(p["brute-printable"]),
-            "filename": p["FILE"] if p["FILE"] else "-",  # stdin by default
-            "filter_output": bool(p["filter-output"]),
+        y = {
+            "brute_chars": False,
+            "brute_printable": True,
+            "filename": "-",  # stdin by default
+            "filter_output": False,
             "frequency_spread": 0,  # to be removed
-            "input_is_hex": bool(p["hex"]),
-            "known_key_length": parse_int(p["key-length"]),
-            "max_key_length": parse_int(p["max-keylen"]),
-            "most_frequent_char": parse_char(p["char"]),
-            "text_charset": get_charset(p["text-charset"]),
-            "known_plain": p["known-plaintext"].encode() if p["known-plaintext"] else False,
+            "input_is_hex": False,
+            "known_key_length": None,
+            "max_key_length": 65,
+            "most_frequent_char": " ",
+            "text_charset": get_charset("*"),
+            "known_plain": False,
         }
+        print(y)
+        return y
     except ValueError as err:
         raise ArgError(str(err))

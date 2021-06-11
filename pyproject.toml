@@ -1,13 +1,12 @@
 [tool.poetry]
 name = "xortool_ciphey"
-version = "0.1.14"
+version = "0.1.15"
 description = "Multi-byte xor analysis for Ciphey"
 authors = ["bee-san <github@skerritt.blog>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.4"
-docopt = "^0.6.2"
 
 [tool.poetry.dev-dependencies]
 

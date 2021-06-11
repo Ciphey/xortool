@@ -1,46 +1,5 @@
 #!/usr/bin/env python3
 
-__doc__ = f"""
-xortool
-  A tool to do some xor analysis:
-  - guess the key length (based on count of equal chars)
-  - guess the key (base on knowledge of most frequent char)
-
-Usage:
-  xortool [-x] [-m MAX-LEN] [-f] [-t CHARSET] [FILE]
-  xortool [-x] [-l LEN] [-c CHAR | -b | -o] [-f] [-t CHARSET] [-p PLAIN] [FILE]
-  xortool [-x] [-m MAX-LEN| -l LEN] [-c CHAR | -b | -o] [-f] [-t CHARSET] [-p PLAIN] [FILE]
-  xortool [-h | --help]
-  xortool --version
-
-Options:
-  -x --hex                          input is hex-encoded str
-  -l LEN, --key-length=LEN          length of the key
-  -m MAX-LEN, --max-keylen=MAX-LEN  maximum key length to probe [default: 65]
-  -c CHAR, --char=CHAR              most frequent char (one char or hex code)
-  -b --brute-chars                  brute force all possible most frequent chars
-  -o --brute-printable              same as -b but will only check printable chars
-  -f --filter-output                filter outputs based on the charset
-  -t CHARSET --text-charset=CHARSET target text character set [default: printable]
-  -p PLAIN --known-plaintext=PLAIN  use known plaintext for decoding
-  -h --help                         show this help
-
-Notes:
-  Text character set:
-    * Pre-defined sets: printable, base32, base64
-    * Custom sets:
-      - a: lowercase chars
-      - A: uppercase chars
-      - 1: digits
-      - !: special chars
-      - *: printable chars
-
-Examples:
-  xortool file.bin
-  xortool -l 11 -c 20 file.bin
-  xortool -x -c ' ' file.hex
-  xortool -b -f -l 23 -t base64 message.enc
-"""
 
 from operator import itemgetter
 import os
@@ -99,7 +58,7 @@ def api(text = None, config = {"most_frequent_char": " ", "known_key_length": No
     if text == None:
         return "Error. No text given."
 
-    PARAMETERS.update(parse_parameters(__doc__))
+    PARAMETERS.update(parse_parameters(string.printable))
 
     ciphertext = text
 

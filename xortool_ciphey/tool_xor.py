@@ -1,20 +1,6 @@
 #!/usr/bin/env python3
 from xortool_ciphey import __version__
-__doc__ = f"""
-xortool-xor {__version__}
-xor strings
-options:
-    -s  -  string with \\xAF escapes
-    -r  -  raw string
-    -h  -  hex-encoded string (non-letterdigit chars are stripped)
-    -f  -  read data from file (- for stdin)
-
-    --newline -  newline at the end (default)
-    -n / --no-newline -  no newline at the end
-    --cycle - do not pad (default)
-    --no-cycle / --nc  -  pad smaller strings with null bytes
-example: xor -s lol -h 414243 -f /etc/passwd
-"""
+_
 
 import getopt
 import sys
@@ -43,7 +29,6 @@ def main():
             raise getopt.GetoptError("no data given")
     except getopt.GetoptError as e:
         print("error:", e, file=sys.stderr)
-        print(__doc__, file=sys.stderr)
         quit()
 
     sys.stdout.buffer.write(xor(datas, cycle=cycle))
