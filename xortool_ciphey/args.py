@@ -33,7 +33,7 @@ def parse_int(i):
 
 def parse_parameters(a):
     try:
-        y = {
+        return {
             "brute_chars": False,
             "brute_printable": True,
             "filename": "-",  # stdin by default
@@ -46,7 +46,5 @@ def parse_parameters(a):
             "text_charset": get_charset("*"),
             "known_plain": False,
         }
-        print(y)
-        return y
     except ValueError as err:
         raise ArgError(str(err))
